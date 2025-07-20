@@ -11,7 +11,7 @@
             "Jjacobstech\\Roqqu\\": "src/"
         },
         "files": [
-            "src/Roqqu.php"
+            "src/RoqquApi.php"
         ]
     },
     "authors": [
