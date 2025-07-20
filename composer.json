@@ -3,12 +3,16 @@
     "description": "This is Roqqu's SDK for Laravel",
     "type": "library",
     "require": {
-        "guzzlehttp/guzzle": "^7.9"
+        "guzzlehttp/guzzle": "^7.9",
+        "illuminate/http": "^12.20"
     },
     "autoload": {
         "psr-4": {
             "Jjacobstech\\Roqqu\\": "src/"
-        }
+        },
+        "files": [
+            "src/Roqqu.php"
+        ]
     },
     "authors": [
         {
