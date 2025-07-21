@@ -12,9 +12,17 @@
     "psr-4": {
       "Jjacobstech\\Roqqu\\": "src/"
     },
+    
     "files": [
       "src/RoqquApi.php"
     ]
+  },
+  "extra": {
+    "laravel": {
+      "providers": [
+        "Jjacobstech\\Roqqu\\RoqquServiceProvider"
+      ]
+    }
   },
   "scripts": {
     "post-install-cmd": [
