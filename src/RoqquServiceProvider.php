@@ -10,7 +10,7 @@ class RoqquServiceProvider extends ServiceProvider
     {
         $this->publishes([
             __DIR__ . '/../config/roqqu.php' => config_path('roqqu.php'),
-        ], 'config');
+        ], 'roqqu-config');
     }
 
     public function register()
