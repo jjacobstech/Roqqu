@@ -1,30 +1,31 @@
-<?php 
+<?php
+
 namespace Jjacobstech\Roqqu;
 
 use GuzzleHttp\Client;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 
 class RoqquApi
 {
       private $client;
 
-      public function __construct()
+      private $public_key;
+
+      public function __construct($private_key, $public_key, $url, $timeout = 30)
       {
 
             /*
         *  Copy this to your env file
-        * ROQQU_PRIVATE_KEY=RASPRIV09df395f942922f76149a63f5cf5715a456cac1c4bab613a9032a8ea9fd6fe3e3df4356217cb6f851748263021966
-        * ROQQU_PUBLIC_KEY=RASPUB0cba90cee97436c95d884a51135eefb700ec98b8bd40df4dc702d296caa61748263021966
+        * ROQQU_PRIVATE_KEY=RAKPRAV66p544g6df59a63f5cf5715a456cac1c4bab613a9032a8ea9fd6fe3e3df4356217cb6f851748263021966
+        * ROQQU_PUBLIC_KEY=RAKPUD0cba90c6jo06c95d884a51135eefb700ec98b8bd40df4dc702d296caa61748263021966
         * ROQQU_URL=https://roqqu-api.redocly.app/_mock/apis/
         *
         * MAKE SURE Url in .env file does not have a trailing slash like the above url
         */
 
-            $private_key = config('roqqu.api.private_key');
-            $url = config('roqqu.api.url');
-            $timeout = config('roqqu.timeout');
-            $this->public_key = config('roqqu.api.public_key');
-            $this->client =  new Client([
+            $this->public_key = $public_key;
+            $this->client = new Client([
                   'base_uri' => $url,
                   'timeout' => $timeout,
                   'headers' => [
@@ -35,106 +36,105 @@ class RoqquApi
             ]);
       }
 
-      public function getBalance(Request $request)
+      public function getBalance($email,$token)
       {
 
-            $request->validate([
-                  'email' => 'required|email',
-                  'token'   => 'required|string',
-            ]);
-
             try {
+                  $validator = (object)  Validator::validate([
+                        'email' => $email,
+                        'token' => $token
+                  ], [
+                        'email'   => 'required|email',
+                        'token'   => 'required|string',
+                  ]);
 
-                  $body = [
-                        'email' =>  $request->get('email'),
-                        'token' =>  $request->get('token')
+                  $params = [
+                        'email' => $validator->email,
+                        'token' => $validator->token
+                  ];           
+
+                  $response = $this->client->post('wallets/get-wallet', [
+                        'form_params' => $params
+                  ]);
+
+                  $data = json_decode($response->getBody(), true);
+
+                  return $data;
+            } catch (\Throwable $th) {
+
+                  return [
+                        'success' => false,
+                        'error' => $th->getMessage()
                   ];
-
-                  $response = $this->client->post('wallets/get-wallet', [
-                        'form_params' => $body
-                  ]);
-
-
-                  return response()->json(
-                        [
-                              'success' => true,
-                              'data' => json_decode($response->getBody(), true),
-                        ]
-                  );
-            } catch (\Throwable $th) {
-                  return response()->json([
-                        'success' => false,
-                        'error' => $th->getMessage(),
-                  ], 500);
             }
       }
 
-      public function getWallet(Request $request)
+      public function getWallet($token)
       {
 
-            $request->validate([
+         $validator = (object)  Validator::validate($token, [
                   'token'   => 'required|string',
             ]);
             try {
-                  $token = $request->get('token');
+
+                  $params = ['token' => $validator->token];
 
                   $response = $this->client->post('wallets/get-wallet', [
-                        'form_params' => [
-                              'token' => $token,
-                        ]
-
+                        'form_params' => $params
                   ]);
 
 
-                  return response()->json(
-                        [
-                              'success' => true,
-                              'data' => json_decode($response->getBody(), true),
-                        ]
-                  );
+                  $data = json_decode($response->getBody(), true);
+
+                  return $data;
             } catch (\Throwable $th) {
-                  return response()->json([
+
+                  return [
                         'success' => false,
-                        'error' => $th->getMessage(),
-                  ], 500);
+                        'error' => $th->getMessage()
+                  ];
             }
       }
 
-      public function getAddresses(Request $request)
+      public function getAddresses($network)
       {
 
-            $request->validate([
-                  'network'   => 'required|string',
-            ]);
+            $validator = (object)  Validator::validate(
+                  ['network' => $network], 
+                  ['network'   => 'required|string']);
+     
             try {
-                  $network = $request->get('network');
+                 $params = ['network' => $validator->network];
 
                   $response = $this->client->post('wallets/get-addresses', [
-                        'form_params' => [
-                              'network' => $network
-                        ]
+                        'form_params' => $params
 
                   ]);
 
 
-                  return response()->json(
-                        [
-                              'success' => true,
-                              'data' => json_decode($response->getBody(), true),
-                        ]
-                  );
+                  $data = json_decode($response->getBody(), true);
+
+                  return $data;
             } catch (\Throwable $th) {
-                  return response()->json([
+
+                  return [
                         'success' => false,
-                        'error' => $th->getMessage(),
-                  ], 500);
+                        'error' => $th->getMessage()
+                  ];
             }
       }
 
-      public function generateWallet(Request $request)
+      public function generateWallet($network, $email, $firstname, $lastname)
       {
 
-            $request->validate([
+            $validator = (object) Validator::validate(
+                  [
+                        'network'   => $network,
+                        'email'     => $email,
+                        'firstname' => $firstname,
+                        'lastname'  => $lastname
+                  ],
+            [
                   'network'   => 'required|string',
                   'email'     => 'required|email',
                   'firstname' => 'required|string',
@@ -143,11 +143,11 @@ class RoqquApi
             try {
 
                   $params = [
-                        'network' => $request->get('network'),
+                        'network' => $validator->network,
                         'customer' => [
-                              'email' => $request->get('email'),
-                              'first_name' => $request->get('firstname'),
-                              'last_name' => $request->get('lastname')
+                              'email' => $validator->email,
+                              'first_name' => $validator->firstname,
+                              'last_name' => $validator->lastname
                         ]
                   ];
 
@@ -157,24 +157,28 @@ class RoqquApi
                   ]);
 
 
-                  return response()->json(
-                        [
-                              'success' => true,
-                              'data' => json_decode($response->getBody(), true),
-                        ]
-                  );
+                  $data = json_decode($response->getBody(), true);
+
+                  return $data;
             } catch (\Throwable $th) {
-                  return response()->json([
+
+                  return [
                         'success' => false,
-                        'error' => $th->getMessage(),
-                  ], 500);
+                        'error' => $th->getMessage()
+                  ];
             }
       }
 
-      public function sendCoin(Request $request)
+      public function sendCoin($amount, $network, $to, $token)
       {
-
-            $request->validate([
+            $validator = (object) Validator::validate(
+                  [
+                        'amount'   => $amount,
+                        'network'   => $network,
+                        'to'   => $to,
+                        'token'   => $token
+                  ],
+            [
                   'amount'   => 'required|string',
                   'network'   => 'required|string',
                   'to'   => 'required|string',
@@ -182,24 +186,22 @@ class RoqquApi
             ]);
 
             try {
-                  $params = ['network' => $request->get('network')];
+                  $params = 
 
                   $response = $this->client->post('wallets/send', [
                         'form_params' => $params
                   ]);
 
 
-                  return response()->json(
-                        [
-                              'success' => true,
-                              'data' => json_decode($response->getBody(), true),
-                        ]
-                  );
+                  $data = json_decode($response->getBody(), true);
+
+                  return $data;
             } catch (\Throwable $th) {
-                  return response()->json([
+
+                  return [
                         'success' => false,
-                        'error' => $th->getMessage(),
-                  ], 500);
+                        'error' => $th->getMessage()
+                  ];
             }
       }
 
@@ -211,17 +213,15 @@ class RoqquApi
                   $response = $this->client->delete('wallets/delete');
 
 
-                  return response()->json(
-                        [
-                              'success' => true,
-                              'data' => json_decode($response->getBody(), true),
-                        ]
-                  );
+                  $data = json_decode($response->getBody(), true);
+
+                  return $data;
             } catch (\Throwable $th) {
-                  return response()->json([
+
+                  return [
                         'success' => false,
-                        'error' => $th->getMessage(),
-                  ], 500);
+                        'error' => $th->getMessage()
+                  ];
             }
       }
 
@@ -240,17 +240,15 @@ class RoqquApi
                   ]);
 
 
-                  return response()->json(
-                        [
-                              'success' => true,
-                              'data' => json_decode($response->getBody(), true),
-                        ]
-                  );
+                  $data = json_decode($response->getBody(), true);
+
+                  return $data;
             } catch (\Throwable $th) {
-                  return response()->json([
+
+                  return [
                         'success' => false,
-                        'error' => $th->getMessage(),
-                  ], 500);
+                        'error' => $th->getMessage()
+                  ];
             }
       }
 
@@ -267,17 +265,15 @@ class RoqquApi
                         // 'form_params' => []
                   ]);
 
-                  return response()->json(
-                        [
-                              'success' => true,
-                              'data' => json_decode($response->getBody(), true),
-                        ]
-                  );
+                  $data = json_decode($response->getBody(), true);
+
+                  return $data;
             } catch (\Throwable $th) {
-                  return response()->json([
+
+                  return [
                         'success' => false,
-                        'error' => $th->getMessage(),
-                  ], 500);
+                        'error' => $th->getMessage()
+                  ];
             }
       }
 
@@ -294,17 +290,15 @@ class RoqquApi
                         'form_params' => $params
                   ]);
 
-                  return response()->json(
-                        [
-                              'success' => true,
-                              'data' => json_decode($response->getBody(), true),
-                        ]
-                  );
+                  $data = json_decode($response->getBody(), true);
+
+                  return $data;
             } catch (\Throwable $th) {
-                  return response()->json([
+
+                  return [
                         'success' => false,
-                        'error' => $th->getMessage(),
-                  ], 500);
+                        'error' => $th->getMessage()
+                  ];
             }
       }
 
@@ -321,17 +315,15 @@ class RoqquApi
                         'json' => $params
                   ]);
 
-                  return response()->json(
-                        [
-                              'success' => true,
-                              'data' => json_decode($response->getBody(), true),
-                        ]
-                  );
+                  $data = json_decode($response->getBody(), true);
+
+                  return $data;
             } catch (\Throwable $th) {
-                  return response()->json([
+
+                  return [
                         'success' => false,
-                        'error' => $th->getMessage(),
-                  ], 500);
+                        'error' => $th->getMessage()
+                  ];
             }
       }
       public function history(Request $request)
@@ -358,18 +350,15 @@ class RoqquApi
 
                   $response = $this->client->post('history', $params);
 
-                  return response()->json(
-                        [
-                              'success' => true,
-                              'data' => json_decode($response->getBody(), true),
-                              'status' => $request->get('status')
-                        ]
-                  );
+                  $data = json_decode($response->getBody(), true);
+
+                  return $data;
             } catch (\Throwable $th) {
-                  return response()->json([
+
+                  return [
                         'success' => false,
-                        'error' => $th->getMessage(),
-                  ], 500);
+                        'error' => $th->getMessage()
+                  ];
             }
       }
 
@@ -379,17 +368,15 @@ class RoqquApi
 
                   $response = $this->client->get('customers');
 
-                  return response()->json(
-                        [
-                              'success' => true,
-                              'data' => json_decode($response->getBody(), true),
-                        ]
-                  );
+                  $data = json_decode($response->getBody(), true);
+
+                  return $data;
             } catch (\Throwable $th) {
-                  return response()->json([
+
+                  return [
                         'success' => false,
-                        'error' => $th->getMessage(),
-                  ], 500);
+                        'error' => $th->getMessage()
+                  ];
             }
       }
 
@@ -411,17 +398,15 @@ class RoqquApi
                         'form_params' => $params
                   ]);
 
-                  return response()->json(
-                        [
-                              'success' => true,
-                              'data' => json_decode($response->getBody(), true),
-                        ]
-                  );
+                  $data = json_decode($response->getBody(), true);
+
+                  return $data;
             } catch (\Throwable $th) {
-                  return response()->json([
+
+                  return [
                         'success' => false,
-                        'error' => $th->getMessage(),
-                  ], 500);
+                        'error' => $th->getMessage()
+                  ];
             }
       }
 
@@ -445,17 +430,15 @@ class RoqquApi
                         'form_params' => $params
                   ]);
 
-                  return response()->json(
-                        [
-                              'success' => true,
-                              'data' => json_decode($response->getBody(), true),
-                        ]
-                  );
+                  $data = json_decode($response->getBody(), true);
+
+                  return $data;
             } catch (\Throwable $th) {
-                  return response()->json([
+
+                  return [
                         'success' => false,
-                        'error' => $th->getMessage(),
-                  ], 500);
+                        'error' => $th->getMessage()
+                  ];
             }
       }
 
@@ -465,17 +448,15 @@ class RoqquApi
 
                   $response = $this->client->get('ip');
 
-                  return response()->json(
-                        [
-                              'success' => true,
-                              'data' => json_decode($response->getBody(), true),
-                        ]
-                  );
+                  $data = json_decode($response->getBody(), true);
+
+                  return $data;
             } catch (\Throwable $th) {
-                  return response()->json([
+
+                  return [
                         'success' => false,
-                        'error' => $th->getMessage(),
-                  ], 500);
+                        'error' => $th->getMessage()
+                  ];
             }
       }
 
@@ -498,17 +479,15 @@ class RoqquApi
                         'form_params' => $params
                   ]);
 
-                  return response()->json(
-                        [
-                              'success' => true,
-                              'data' => json_decode($response->getBody(), true),
-                        ]
-                  );
+                  $data = json_decode($response->getBody(), true);
+
+                  return $data;
             } catch (\Throwable $th) {
-                  return response()->json([
+
+                  return [
                         'success' => false,
-                        'error' => $th->getMessage(),
-                  ], 500);
+                        'error' => $th->getMessage()
+                  ];
             }
       }
 
@@ -518,17 +497,15 @@ class RoqquApi
 
                   $response = $this->client->get('webhooks');
 
-                  return response()->json(
-                        [
-                              'success' => true,
-                              'data' => json_decode($response->getBody(), true),
-                        ]
-                  );
+                  $data = json_decode($response->getBody(), true);
+
+                  return $data;
             } catch (\Throwable $th) {
-                  return response()->json([
+
+                  return [
                         'success' => false,
-                        'error' => $th->getMessage(),
-                  ], 500);
+                        'error' => $th->getMessage()
+                  ];
             }
       }
 
@@ -539,17 +516,15 @@ class RoqquApi
 
                   $response = $this->client->get("analytics/volume?interval=$query");
 
-                  return response()->json(
-                        [
-                              'success' => true,
-                              'data' => json_decode($response->getBody(), true),
-                        ]
-                  );
+                  $data = json_decode($response->getBody(), true);
+
+                  return $data;
             } catch (\Throwable $th) {
-                  return response()->json([
+
+                  return [
                         'success' => false,
-                        'error' => $th->getMessage(),
-                  ], 500);
+                        'error' => $th->getMessage()
+                  ];
             }
       }
 
@@ -559,17 +534,15 @@ class RoqquApi
 
                   $response = $this->client->get("analytics/wallet-generation");
 
-                  return response()->json(
-                        [
-                              'success' => true,
-                              'data' => json_decode($response->getBody(), true),
-                        ]
-                  );
+                  $data = json_decode($response->getBody(), true);
+
+                  return $data;
             } catch (\Throwable $th) {
-                  return response()->json([
+
+                  return [
                         'success' => false,
-                        'error' => $th->getMessage(),
-                  ], 500);
+                        'error' => $th->getMessage()
+                  ];
             }
       }
 
@@ -579,17 +552,15 @@ class RoqquApi
 
                   $response = $this->client->get("analytics/stats");
 
-                  return response()->json(
-                        [
-                              'success' => true,
-                              'data' => json_decode($response->getBody(), true),
-                        ]
-                  );
+                  $data = json_decode($response->getBody(), true);
+
+                  return $data;
             } catch (\Throwable $th) {
-                  return response()->json([
+
+                  return [
                         'success' => false,
-                        'error' => $th->getMessage(),
-                  ], 500);
+                        'error' => $th->getMessage()
+                  ];
             }
       }
 
@@ -599,17 +570,15 @@ class RoqquApi
 
                   $response = $this->client->get("analytics/wallet-stats");
 
-                  return response()->json(
-                        [
-                              'success' => true,
-                              'data' => json_decode($response->getBody(), true),
-                        ]
-                  );
+                  $data = json_decode($response->getBody(), true);
+
+                  return $data;
             } catch (\Throwable $th) {
-                  return response()->json([
+
+                  return [
                         'success' => false,
-                        'error' => $th->getMessage(),
-                  ], 500);
+                        'error' => $th->getMessage()
+                  ];
             }
       }
 
@@ -630,18 +599,15 @@ class RoqquApi
 
                   $response = $this->client->post('trade/buy', $params);
 
-                  return response()->json(
-                        [
-                              'success' => true,
-                              'data' => json_decode($response->getBody(), true),
-                              'purchased' => true
-                        ]
-                  );
+                  $data = json_decode($response->getBody(), true);
+
+                  return $data;
             } catch (\Throwable $th) {
-                  return response()->json([
+
+                  return [
                         'success' => false,
-                        'error' => $th->getMessage(),
-                  ], 500);
+                        'error' => $th->getMessage()
+                  ];
             }
       }
 
@@ -662,18 +628,15 @@ class RoqquApi
 
                   $response = $this->client->post('trade/sell', $params);
 
-                  return response()->json(
-                        [
-                              'success' => true,
-                              'data' => json_decode($response->getBody(), true),
-                              'sold' => true
-                        ]
-                  );
+                  $data = json_decode($response->getBody(), true);
+
+                  return $data;
             } catch (\Throwable $th) {
-                  return response()->json([
+
+                  return [
                         'success' => false,
-                        'error' => $th->getMessage(),
-                  ], 500);
+                        'error' => $th->getMessage()
+                  ];
             }
       }
 
@@ -696,17 +659,15 @@ class RoqquApi
 
                   $response = $this->client->post('trade/swap', $params);
 
-                  return response()->json(
-                        [
-                              'success' => true,
-                              'data' => json_decode($response->getBody(), true),
-                        ]
-                  );
+                  $data = json_decode($response->getBody(), true);
+
+                  return $data;
             } catch (\Throwable $th) {
-                  return response()->json([
+
+                  return [
                         'success' => false,
-                        'error' => $th->getMessage(),
-                  ], 500);
+                        'error' => $th->getMessage()
+                  ];
             }
       }
 
@@ -716,17 +677,15 @@ class RoqquApi
 
                   $response = $this->client->get('tokens');
 
-                  return response()->json(
-                        [
-                              'success' => true,
-                              'data' => json_decode($response->getBody(), true),
-                        ]
-                  );
+                  $data = json_decode($response->getBody(), true);
+
+                  return $data;
             } catch (\Throwable $th) {
-                  return response()->json([
+
+                  return [
                         'success' => false,
-                        'error' => $th->getMessage(),
-                  ], 500);
+                        'error' => $th->getMessage()
+                  ];
             }
       }
 
@@ -736,17 +695,15 @@ class RoqquApi
 
                   $response = $this->client->get('transaction/token-deposit');
 
-                  return response()->json(
-                        [
-                              'success' => true,
-                              'data' => json_decode($response->getBody(), true),
-                        ]
-                  );
+                  $data = json_decode($response->getBody(), true);
+
+                  return $data;
             } catch (\Throwable $th) {
-                  return response()->json([
+
+                  return [
                         'success' => false,
-                        'error' => $th->getMessage(),
-                  ], 500);
+                        'error' => $th->getMessage()
+                  ];
             }
       }
 
@@ -756,17 +713,15 @@ class RoqquApi
 
                   $response = $this->client->get('transaction/token-withdrawal');
 
-                  return response()->json(
-                        [
-                              'success' => true,
-                              'data' => json_decode($response->getBody(), true),
-                        ]
-                  );
+                  $data = json_decode($response->getBody(), true);
+
+                  return $data;
             } catch (\Throwable $th) {
-                  return response()->json([
+
+                  return [
                         'success' => false,
-                        'error' => $th->getMessage(),
-                  ], 500);
+                        'error' => $th->getMessage()
+                  ];
             }
       }
 
@@ -777,17 +732,15 @@ class RoqquApi
 
                   $response = $this->client->get("transaction/deposit/$slug");
 
-                  return response()->json(
-                        [
-                              'success' => true,
-                              'data' => json_decode($response->getBody(), true),
-                        ]
-                  );
+                  $data = json_decode($response->getBody(), true);
+
+                  return $data;
             } catch (\Throwable $th) {
-                  return response()->json([
+
+                  return [
                         'success' => false,
-                        'error' => $th->getMessage(),
-                  ], 500);
+                        'error' => $th->getMessage()
+                  ];
             }
       }
 
@@ -798,17 +751,15 @@ class RoqquApi
 
                   $response = $this->client->get("transaction/status/$slug");
 
-                  return response()->json(
-                        [
-                              'success' => true,
-                              'data' => json_decode($response->getBody(), true),
-                        ]
-                  );
+                  $data = json_decode($response->getBody(), true);
+
+                  return $data;
             } catch (\Throwable $th) {
-                  return response()->json([
+
+                  return [
                         'success' => false,
-                        'error' => $th->getMessage(),
-                  ], 500);
+                        'error' => $th->getMessage()
+                  ];
             }
       }
 
@@ -818,17 +769,15 @@ class RoqquApi
 
                   $response = $this->client->get("transaction/refid/$slug");
 
-                  return response()->json(
-                        [
-                              'success' => true,
-                              'data' => json_decode($response->getBody(), true),
-                        ]
-                  );
+                  $data = json_decode($response->getBody(), true);
+
+                  return $data;
             } catch (\Throwable $th) {
-                  return response()->json([
+
+                  return [
                         'success' => false,
-                        'error' => $th->getMessage(),
-                  ], 500);
+                        'error' => $th->getMessage()
+                  ];
             }
       }
 
@@ -850,17 +799,15 @@ class RoqquApi
                   ]);
 
 
-                  return response()->json(
-                        [
-                              'success' => true,
-                              'data' => json_decode($response->getBody(), true),
-                        ]
-                  );
+                  $data = json_decode($response->getBody(), true);
+
+                  return $data;
             } catch (\Throwable $th) {
-                  return response()->json([
+
+                  return [
                         'success' => false,
-                        'error' => $th->getMessage(),
-                  ], 500);
+                        'error' => $th->getMessage()
+                  ];
             }
       }
 
@@ -880,17 +827,15 @@ class RoqquApi
                   ]);
 
 
-                  return response()->json(
-                        [
-                              'success' => true,
-                              'data' => json_decode($response->getBody(), true),
-                        ]
-                  );
+                  $data = json_decode($response->getBody(), true);
+
+                  return $data;
             } catch (\Throwable $th) {
-                  return response()->json([
+
+                  return [
                         'success' => false,
-                        'error' => $th->getMessage(),
-                  ], 500);
+                        'error' => $th->getMessage()
+                  ];
             }
       }
 
@@ -909,17 +854,15 @@ class RoqquApi
                   ]);
 
 
-                  return response()->json(
-                        [
-                              'success' => true,
-                              'data' => json_decode($response->getBody(), true),
-                        ]
-                  );
+                  $data = json_decode($response->getBody(), true);
+
+                  return $data;
             } catch (\Throwable $th) {
-                  return response()->json([
+
+                  return [
                         'success' => false,
-                        'error' => $th->getMessage(),
-                  ], 500);
+                        'error' => $th->getMessage()
+                  ];
             }
       }
 
@@ -937,17 +880,15 @@ class RoqquApi
                         'network' => $network
                   ]);
 
-                  return response()->json(
-                        [
-                              'success' => true,
-                              'data' => json_decode($response->getBody(), true),
-                        ]
-                  );
+                  $data = json_decode($response->getBody(), true);
+
+                  return $data;
             } catch (\Throwable $th) {
-                  return response()->json([
+
+                  return [
                         'success' => false,
-                        'error' => $th->getMessage(),
-                  ], 500);
+                        'error' => $th->getMessage()
+                  ];
             }
       }
 }
