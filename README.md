@@ -47,4 +47,3 @@ return $response;
 
 * [Jacobs Joshua](https://github.com/jjacobstech)
 * [jacobsjoshua81@gmail.com](mailto:jacobsjoshua81@gmail.com)
-
