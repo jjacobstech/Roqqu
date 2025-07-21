@@ -186,7 +186,12 @@ class RoqquApi
             ]);
 
             try {
-                  $params = 
+                  $params = [
+                        'amount'   => $validator->amount,
+                        'network'   => $validator->network,
+                        'to'   => $validator->to,
+                        'token'   => $validator->token
+                  ];
 
                   $response = $this->client->post('wallets/send', [
                         'form_params' => $params
@@ -205,13 +210,11 @@ class RoqquApi
             }
       }
 
-      public function deleteWallet(Request $request)
+      public function deleteWallet()
       {
             try {
 
-
                   $response = $this->client->delete('wallets/delete');
-
 
                   $data = json_decode($response->getBody(), true);
 
@@ -225,15 +228,21 @@ class RoqquApi
             }
       }
 
-      public function whatNetwork(Request $request)
+      public function whatNetwork($address)
       {
 
-            $request->validate([
-                  'address'   => 'required|string',
-            ]);
+
+            $validator = (object) Validator::validate(
+                  [
+                        'address'   => $address
+                  ],
+                  [
+                        'address'   => 'required|string'
+                  ]
+            );
 
             try {
-                  $params = ['address' => $request->get('address')];
+                  $params = ['address' => $validator->address];
 
                   $response = $this->client->post('wallets/what-network', [
                         'form_params' => $params
@@ -277,14 +286,19 @@ class RoqquApi
             }
       }
 
-      public function getNetwork(Request $request)
+      public function getNetwork($network)
       {
-            $request->validate([
-                  'network'   => 'required|string',
-            ]);
+            $validator = (object) Validator::validate(
+                  [
+                        'network'   => $network
+                  ],
+                  [
+                        'network'   => 'required|string'
+                  ]
+            );
 
             try {
-                  $params = ['network' => $request->get('network')];
+                  $params = ['network' => $validator->network];
 
                   $response = $this->client->post('wallets/get-network', [
                         'form_params' => $params
@@ -302,14 +316,19 @@ class RoqquApi
             }
       }
 
-      public function generateMerchantWallet(Request $request)
+      public function generateMerchantWallet($network)
       {
-            $request->validate([
-                  'network'   => 'required|string',
-            ]);
+            $validator = (object) Validator::validate(
+                  [
+                        'network'   => $network
+                  ],
+                  [
+                        'network'   => 'required|string'
+                  ]
+            );
 
             try {
-                  $params = ['network' => $request->get('network')];
+                  $params = ['network' => $validator->network];
 
                   $response = $this->client->post('wallets/generate-merchant-wallet', [
                         'json' => $params
@@ -326,26 +345,34 @@ class RoqquApi
                   ];
             }
       }
-      public function history(Request $request)
+      public function history($token,$email,$network,$direction,$timestamp,$status)
       {
-            $request->validate([
 
-                  'token'   => 'required|string',
-                  'email'     => 'required|email',
-                  'network'   => 'required|string',
-                  'direction'   => 'required|string',
-                  'timestamp'   => 'required|date',
-                  'status'   => 'required|integer|in:0,1',
-            ]);
+            $validator = (object) Validator::make(
+                  [
+                        'token'     => $token,
+                        'email'     => $email,
+                        'network'   => $network,
+                        'direction' => $direction,
+                        'timestamp' => $timestamp,
+                        'status' => $status
+                  ],[
+                        'token'   => 'required|string',
+                        'email'     => 'required|email',
+                        'network'   => 'required|string',
+                        'direction'   => 'required|string',
+                        'timestamp'   => 'required|date',
+                        'status'   => 'required|integer|in:0,1',
+                  ]);
 
             try {
                   $params = [
-                        'token'     => $request->get('token'),
-                        'email'     => $request->get('email'),
-                        'network'   => $request->get('network'),
-                        'direction' => $request->get('direction'),
-                        'timestamp' => $request->get('timestamp'),
-                        'status' => $request->get('status')
+                        'token'     => $validator->token,
+                        'email'     => $validator->email,
+                        'network'   => $validator->network,
+                        'direction' => $validator->direction,
+                        'timestamp' => $validator->timestamp,
+                        'status' => $validator->status
                   ];
 
                   $response = $this->client->post('history', $params);
@@ -380,18 +407,24 @@ class RoqquApi
             }
       }
 
-      public function customersBlacklist(Request $request)
+      public function customersBlacklist($email, $reason)
       {
 
-            $request->validate([
-                  'email'   => 'required|email',
-                  'reason'   => 'required|string',
-            ]);
+            $validator = (object) Validator::make(
+                  [
+                        'reason'     => $reason,
+                        'email'     => $email
+                  ],
+                  [
+                        'email'   => 'required|email',
+                        'reason'   => 'required|string',
+                  ]
+            );
 
             try {
                   $params = [
-                        'email' => $request->get('email'),
-                        'reason' => $request->get('reason')
+                        'reason'     => $validator->reason,
+                        'email'     => $validator->email
                   ];
 
                   $response = $this->client->post('customers/blacklist', [

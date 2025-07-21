@@ -14,7 +14,7 @@ function test(){
      $ROQQU_URL="https://roqqu-api.redocly.app/_mock/apis/";
 
       $roqqu = new RoqquApi($ROQQU_PRIVATE_KEY,$ROQQU_PUBLIC_KEY,$ROQQU_URL);
-  var_dump ($roqqu->customersBlacklist());
+  var_dump ($roqqu->customersBlacklist(1,1));
 }
 
 test();
