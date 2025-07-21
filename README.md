@@ -42,3 +42,9 @@ $response = $roqqu->customersBlacklist("jacobsjoshua81@gmail.com",  'reason');
 return $response;
 }
 ```
+
+## Author
+
+* [Jacobs Joshua](https://github.com/jjacobstech)
+* [jacobsjoshua81@gmail.com](mailto:jacobsjoshua81@gmail.com)
+
