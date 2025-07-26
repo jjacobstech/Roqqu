@@ -215,10 +215,9 @@ class RoqquApi
             try {
 
                   $response = $this->client->post('wallets/get-all-networks', [
-                        // 'headers' => [
-                        //     'Content-Type' => 'application/x-www-form-urlencoded',
-                        // ],
-                        // 'form_params' => []
+                        'headers' => [
+                            'Content-Type' => '',
+                        ]
                   ]);
 
                   $data = json_decode($response->getBody(), true);
@@ -254,7 +253,6 @@ class RoqquApi
                   ];
             }
       }
-
       public function generateMerchantWallet(string $network)
       {
 
